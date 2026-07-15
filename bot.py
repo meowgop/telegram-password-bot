@@ -16,6 +16,13 @@ from typing import Dict, Set, Tuple, Optional
 from datetime import datetime
 import logging
 
+# Force Python 3.11 compatibility
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+except:
+    pass
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 
@@ -35,7 +42,7 @@ log = logging.getLogger("PWD_BOT")
 user_sessions = {}
 
 # ============================================================
-# DATABASE - Use /tmp for Render
+# DATABASE
 # ============================================================
 DB_PATH = os.path.join('/tmp', 'bot_data.db')
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -497,7 +504,15 @@ def main():
     log.info(f"👑 Admin IDs: {ADMIN_IDS}")
     log.info("=" * 50)
     
-    app = Application.builder().token(BOT_TOKEN).build()
+    # FIX: Use older version compatibility
+    try:
+        app = Application.builder().token(BOT_TOKEN).build()
+    except Exception as e:
+        log.error(f"Build error: {e}")
+        # Fallback for older versions
+        from telegram.ext import Updater
+        updater = Updater(token=BOT_TOKEN)
+        app = updater.application
     
     # COMMAND HANDLERS
     app.add_handler(CommandHandler("start", start))
